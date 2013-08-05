@@ -54,36 +54,27 @@
 #define JOYPAN 0
 #define JOYTILT 1
 
+//generic deadband limits - not all joystics will center at 512, so these limits remove 'drift' from joysticks that are off-center.
 #define DEADBANDLOW 480
 #define DEADBANDHIGH 540
 
 
-//Include necessary Libraries to drive the DYNAMIXEL servos and recieve commander instructions  
+//Include necessary Libraries to drive the DYNAMIXEL servos  
 #include <ax12.h>
 #include <BioloidController.h>
-#include <Commander.h>
 
 
 /* Hardware Constructs */
 BioloidController bioloid = BioloidController(1000000);  //create a bioloid object at a baud of 1MBps
-Commander command = Commander();
 
 int pan;    //current position of the pan servo
 int tilt;   //current position of the tilt servo  
 int panMod =1;  //modifier for pan speed on left joystick - increase this to reduce the turret's speed
 int tiltMod =1;  //modifier for tilt speed on left joystick - increase this to reduce the turret's speed
-int joyPanVal = 0;
-int joyTiltVal = 0;
-int joyTiltMapped =0;
-int joyPanMapped =0;
-
-
-
-boolean turretActive = false;   // Is the turret on/receieivng commands - used to set the turret to a defualt position if it loses contact with the commander
-unsigned long   lastMsgTime;    // Keep track of when the last message arrived to see if controller off
-
-boolean leftPrev = false;      //left top button previous state
-boolean rightPrev = false;     //right top button previous state
+int joyPanVal = 0;//current value of the pan joystick (analog 0)
+int joyTiltVal = 0;//current value of the tilt joystick (analog 1)
+int joyTiltMapped =0;//tilt joystick value, mapped from 1-1023 to -500-500
+int joyPanMapped =0;//pan joystick value, mapped from 1-1023 to -500-500
 
 void setup(){
   
@@ -94,8 +85,8 @@ void setup(){
   Serial.begin(38400);
   
   // setup interpolation, slowly raise turret to a 'home' positon. 2048 are the 'center' positions for both servos
-  pan = DEFAULT_PAN;
-  tilt = DEFAULT_TILT;
+  pan = DEFAULT_PAN;//load default pan value for startup
+  tilt = DEFAULT_TILT;//load default tilt value for startup
   delay(1000);
   bioloid.poseSize = 2;//2 servos, so the pose size will be 2
   bioloid.readPose();//find where the servos are currently
@@ -112,13 +103,12 @@ void setup(){
 
  
 void loop(){
-
+   //read analog values from joysticks
    joyPanVal = analogRead(JOYPAN);
    joyTiltVal = analogRead(JOYTILT);
+       
    
-      
-   
-   //deadzone for pan jotystick
+   //deadzone for pan jotystick - only change the pan value if the joystick value is outside the deadband
    if(joyPanVal > DEADBANDHIGH || joyPanVal < DEADBANDLOW)
    {
      joyPanMapped = map(joyPanVal, 0, 1023, -500, 500);
@@ -126,8 +116,7 @@ void loop(){
      pan += joyPanMapped/100;
    }
     
-
-   //deadzone for tilt jotystick  
+   //deadzone for tilt jotystick - only change the pan value if the joystick value is outside the deadband  
    if(joyTiltVal > DEADBANDHIGH || joyTiltVal < DEADBANDLOW)
    {
      joyTiltMapped = map(joyTiltVal, 0, 1023, -500, 500);
@@ -143,7 +132,6 @@ void loop(){
       tilt =TILT_LOWER_LIMIT;
   
     }  
-  
     else if (tilt > TILT_UPPER_LIMIT)
     {
       tilt =TILT_UPPER_LIMIT;
