@@ -36,12 +36,12 @@
 #define PAN    1
 #define TILT   2
 
-// the H101 'C' bracket attached to the tilt servo creates a physical limitation to how far
+// the F2 'C' bracket attached to the tilt servo creates a physical limitation to how far
 // we can move the tilt servo. This software limit will ensure that we don't jam the bracket into the servo.
 #define TILT_UPPER_LIMIT 768 
 #define TILT_LOWER_LIMIT 256
 
-//Upper/Lower limits for the pan servo - by defualt they are the normal 0-4095 (0-360) positions for the servo
+//Upper/Lower limits for the pan servo - by defualt they are the normal 0-1023 (0-300) positions for the servo
 #define PAN_UPPER_LIMIT 1023 
 #define PAN_LOWER_LIMIT 0
 
@@ -64,7 +64,7 @@
 #include <BioloidController.h>
 
 
-/* Hardware Constructs */
+/* Hardware Construct */
 BioloidController bioloid = BioloidController(1000000);  //create a bioloid object at a baud of 1MBps
 
 int pan;    //current position of the pan servo
@@ -75,16 +75,15 @@ int joyPanVal = 0;//current value of the pan joystick (analog 0)
 int joyTiltVal = 0;//current value of the tilt joystick (analog 1)
 int joyTiltMapped =0;//tilt joystick value, mapped from 1-1023 to -500-500
 int joyPanMapped =0;//pan joystick value, mapped from 1-1023 to -500-500
+int speed = 50;//increase this to increase the speed of the movement
+
 
 void setup(){
   
   // setup LED
   pinMode(0,OUTPUT);
   
-  // setup serial for commander communications 
-  Serial.begin(38400);
-  
-  // setup interpolation, slowly raise turret to a 'home' positon. 2048 are the 'center' positions for both servos
+  // setup interpolation, slowly raise turret to a 'home' positon. 1023 are the 'center' positions for both servos
   pan = DEFAULT_PAN;//load default pan value for startup
   tilt = DEFAULT_TILT;//load default tilt value for startup
   delay(1000);
@@ -111,20 +110,16 @@ void loop(){
    //deadzone for pan jotystick - only change the pan value if the joystick value is outside the deadband
    if(joyPanVal > DEADBANDHIGH || joyPanVal < DEADBANDLOW)
    {
-     joyPanMapped = map(joyPanVal, 0, 1023, -500, 500);
-     //joyPanMapped = joyPanVal;
-     pan += joyPanMapped/100;
+     joyPanMapped = map(joyPanVal, 0, 1023, -speed, 50);
+     pan += joyPanMapped;
    }
     
    //deadzone for tilt jotystick - only change the pan value if the joystick value is outside the deadband  
    if(joyTiltVal > DEADBANDHIGH || joyTiltVal < DEADBANDLOW)
    {
-     joyTiltMapped = map(joyTiltVal, 0, 1023, -500, 500);
-     //joyTiltMapped = joyTiltVal;
-     tilt += joyTiltMapped/100;
+     joyTiltMapped = map(joyTiltVal, 0, 1023, -50, 50);
+     tilt += joyTiltMapped;
    }
-     
-      
       
     //enforce upper/lower limits for tilt servo
     if (tilt < TILT_LOWER_LIMIT)
@@ -157,6 +152,6 @@ void loop(){
     SetPosition(TILT,tilt);
 
 
-  delay(10);
+    delay(10); //delay to allow the analog-to-digital converter to settle before the next reading
 }
 
