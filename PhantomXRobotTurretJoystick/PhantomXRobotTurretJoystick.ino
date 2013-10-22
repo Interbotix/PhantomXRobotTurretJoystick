@@ -110,14 +110,14 @@ void loop(){
    //deadzone for pan jotystick - only change the pan value if the joystick value is outside the deadband
    if(joyPanVal > DEADBANDHIGH || joyPanVal < DEADBANDLOW)
    {
-     joyPanMapped = map(joyPanVal, 0, 1023, -speed, 50);
+     joyPanMapped = map(joyPanVal, 0, 1023, -speed, speed);
      pan += joyPanMapped;
    }
     
    //deadzone for tilt jotystick - only change the pan value if the joystick value is outside the deadband  
    if(joyTiltVal > DEADBANDHIGH || joyTiltVal < DEADBANDLOW)
    {
-     joyTiltMapped = map(joyTiltVal, 0, 1023, -50, 50);
+     joyTiltMapped = map(joyTiltVal, 0, 1023, -speed, speed);
      tilt += joyTiltMapped;
    }
       
